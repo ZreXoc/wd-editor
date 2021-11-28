@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "a wikidot editor",
   "main": "index.js",
+  "author": "ZreXoc",
   "scripts": {
     "watch": "webpack --watch",
     "start": "webpack-dev-server --open --mode development",
     "build": "webpack"
   },
-  "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/lodash": "^4.14.177",
