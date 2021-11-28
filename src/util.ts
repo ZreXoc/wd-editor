@@ -18,6 +18,7 @@ export const range = {
       };
     },
   },
+
   /**
    * ranges in current line
    */
