@@ -1,7 +1,7 @@
 var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
-var MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+// var MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
   entry: './src/index.ts',
@@ -25,13 +25,14 @@ module.exports = {
       template: 'static/index.html',
       chunks: ['main'],
     }),
-    new MonacoWebpackPlugin(),
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    filename: '[name].[chunkhash:8]..js',
+    library: 'wdEditor',
+    libraryTarget: 'umd',
+    filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
   },
 };
