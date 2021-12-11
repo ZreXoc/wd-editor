@@ -1,5 +1,11 @@
 import * as _ from 'lodash';
-import { CancellationToken, editor, languages, Position } from 'monaco-editor';
+import {
+  CancellationToken,
+  editor,
+  KeyCode,
+  languages,
+  Position,
+} from 'monaco-editor';
 import { range } from './util';
 
 type InlineBlock = {
@@ -26,6 +32,15 @@ const inlineMarks = {
   strikethrough: {
     mark: '--',
   },
+  superscript: {
+    mark: '^^',
+  },
+  subscript: {
+    mark: ',,',
+  },
+  raw: {
+    mark: '@@',
+  },
 };
 
 export const completionItemProvider: languages.CompletionItemProvider = {
@@ -36,8 +51,6 @@ export const completionItemProvider: languages.CompletionItemProvider = {
     const before = model.getValueInRange(range.l.before(model, position));
     const wordRange = range.w.c(model, position);
     const word = model.getValueInRange(wordRange);
-
-    console.log(before, word);
 
     switch (before[before.length - 1]) {
       //blocks
@@ -61,10 +74,36 @@ export const completionItemProvider: languages.CompletionItemProvider = {
             ['h5', '\n+++++ ', 'header five'],
             ['h6', '\n++++++ ', 'header six'],
             ['quote', '\n> ', 'quote'],
+            ['link', '[[[${1:link} ${2:text}]]]'],
+            [
+              'image',
+              '[[include component:image-block name=${1:source} |caption=${2:description}]]',
+            ],
             [
               'collapsible',
               '[[collapsible show="+ ${1:show}" hide="- ${2:hide}"]]\n${3:inside}\n[[/collapsible]]',
               'collapsible block',
+            ],
+            ['note', '[[note]]${1:note}[[/note]]'],
+            ['code', '[[code]]${1:code}[[/code]]'],
+            ['span', '[[span]]${1:text}[[/span]]'],
+            ['div', '[[div]]${1:text}[[/div]]'],
+            ['html', '[[html]]${1:html}[[/html]]'],
+            [
+              'invisible',
+              '[!-- ${1:invisible comment} --]',
+              'the words inside will not be seen',
+            ],
+            [
+              'pinyin',
+              '[[span class="ruby"]]${1:拼音或其他文字标示}[[span class="rt"]]${2:Pīnyīn huò qítā wénzì biāoshì}[[/span]][[/span]]',
+              'pinyin or other text markings',
+            ],
+            ['keycap', '[[span class="keycap"]]${1:Ctrl}[[/span]]'],
+            ['user', '[[user ${1:username}]]'],
+            [
+              'tab view',
+              '[[tabview]]\n[[tab ${1:晓（あかつき）}]]\n${2:text}\n[[/tab]]\n[[/tabview]]\n',
             ],
           ].map(([label, insertText, detail]) => {
             return {
@@ -100,20 +139,6 @@ export const completionItemProvider: languages.CompletionItemProvider = {
         insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
         label: 'size',
         detail: 'change the size of the text inside',
-        /* additionalTextEdits: [
-          {
-            range: {
-              ...wordRange,
-              startColumn: model.getLineLastNonWhitespaceColumn(
-                position.lineNumber
-              ),
-              endColumn: model.getLineLastNonWhitespaceColumn(
-                position.lineNumber
-              ),
-            },
-            text: '[[size]]',
-          },
-        ], */
       });
 
       if (before.search(/\[\[size\s+$/) > -1) {
@@ -148,6 +173,33 @@ export const completionItemProvider: languages.CompletionItemProvider = {
     };
   },
   triggerCharacters: ['[', '$', '#', '\n'],
+};
+
+export const listenKeyEvent = (instance: editor.IStandaloneCodeEditor) => {
+  //listen enter
+  instance.onKeyDown((e) => {
+    if (!e.equals(KeyCode.Enter)) return;
+
+    const selection = instance.getSelection();
+    const currentLine = instance
+      .getModel()
+      .getLineContent(instance.getPosition().lineNumber);
+
+    //http://www.wikidot.com/doc-wiki-syntax:block-quotes
+    //http://www.wikidot.com/doc-wiki-syntax:lists
+    const matchQuote = currentLine.match(/^(>+\s)|(\s*(\*|#)\s)/);
+    if (matchQuote && !currentLine.endsWith('\\')) {
+      e.preventDefault();
+      instance.executeEdits('keyListener', [
+        {
+          range: selection,
+          text: `\n${matchQuote[0]}`,
+          forceMoveMarkers: true,
+        },
+      ]);
+      return;
+    }
+  });
 };
 
 export const WIKIDOT = {

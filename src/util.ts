@@ -32,5 +32,14 @@ export const range = {
         endColumn: word.startColumn,
       };
     },
+    forward(model: editor.ITextModel, position: Position) {
+      const word = model.getWordUntilPosition(position);
+      return {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: 0,
+        endColumn: word.endColumn,
+      };
+    },
   },
 };
