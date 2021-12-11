@@ -1,5 +1,5 @@
 {
-  "name": "wikidot-editor",
+  "name": "wd-editor",
   "version": "0.0.2",
   "description": "a wikidot editor",
   "main": "index.js",
@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "watch": "webpack --watch",
-    "serve": "webpack-dev-server --open --mode development",
+    "start": "webpack-dev-server --open --mode development",
     "build": "webpack"
   },
   "devDependencies": {
